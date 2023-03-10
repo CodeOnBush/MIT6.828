@@ -163,22 +163,35 @@ static void
 cga_putc(int c)
 {
 	// if no attribute given, then use black on white
+	// 这个条件在c的长度大于8位时可能不成立，
 	if (!(c & ~0xFF))
 		c |= 0x0700;
 
+	/**
+	 * @brief //c & 0xff 表示对变量 c 进行位运算，只保留 c 的低8位（即0~7位），其它位全部清零。
+	 * 在程序中，c 是一个16位的无符号整数，其中高8位表示字符的属性，低8位表示字符本身的ASCII码。
+	 * 对于输入字符，高8位是属性信息，低8位是字符本身。为了提取字符本身的ASCII码，
+	 * 需要将高8位的属性信息清零，只保留低8位的字符信息。这就是使用 c & 0xff 的原因。
+	 * 在 switch 语句中，编译器会将每个字符常量转换为其对应的 ASCII 码值，然后将其与 c 进行比较。因为 c 存储的是一个字符的 ASCII 码值，所以可以直接将其与字符常量进行比较。
+		需要注意的是，字符常量在 C 语言中也是整型类型，它们的 ASCII 码值可以通过类型转换来存储在一个 int 类型的变量中，因此 switch 语句可以使用 int 类型的变量来比较字符常量。
+	 */
 	switch (c & 0xff) {
+		//如果输入字符是退格符 '\b'，则将光标向前移动一个字符位置，并在屏幕上清除该字符。
 	case '\b':
 		if (crt_pos > 0) {
 			crt_pos--;
 			crt_buf[crt_pos] = (c & ~0xff) | ' ';
 		}
 		break;
+		//如果输入字符是换行符 '\n'，则将光标移到下一行。
 	case '\n':
 		crt_pos += CRT_COLS;
 		/* fallthru */
+		//如果输入字符是回车符 '\r'，则将光标移到当前行的开头。
 	case '\r':
 		crt_pos -= (crt_pos % CRT_COLS);
 		break;
+		//如果输入字符是制表符 '\t'，则在屏幕上输入五个空格
 	case '\t':
 		cons_putc(' ');
 		cons_putc(' ');
@@ -186,12 +199,15 @@ cga_putc(int c)
 		cons_putc(' ');
 		cons_putc(' ');
 		break;
+		//如果输入字符是普通字符，则将其写入屏幕上当前位置，并将光标向后移动一个字符位置。
 	default:
 		crt_buf[crt_pos++] = c;		/* write the character */
 		break;
 	}
 
 	// What is the purpose of this?
+	//这个 if 语句检查屏幕上的字符数是否超过了屏幕的容量。
+	//如果超过了，它会将整个屏幕向上滚动一行，并在最后一行输入空格字符。然后，将光标移到最后一行的开头。
 	if (crt_pos >= CRT_SIZE) {
 		int i;
 
@@ -202,6 +218,11 @@ cga_putc(int c)
 	}
 
 	/* move that little blinky thing */
+	/**
+	 * @brief 这些是用于将光标位置设置为屏幕上当前位置的代码。它们将两个字节的光标位置写入地址为 addr_6845 的端口，
+	 * 其中第一个字节是高字节，第二个字节是低字节。这个代码段实际上是将光标移到屏幕上最后一个写入的字符的位置。
+	 * 
+	 */
 	outb(addr_6845, 14);
 	outb(addr_6845 + 1, crt_pos >> 8);
 	outb(addr_6845, 15);
