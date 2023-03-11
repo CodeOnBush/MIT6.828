@@ -79,15 +79,33 @@ getint(va_list *ap, int lflag)
 // Main function to format and print a string.
 void printfmt(void (*putch)(int, void*), void *putdat, const char *fmt, ...);
 
+/**
+ * @brief 
+ * 
+ * @param putch 输出函数指针，用于将字符输出到输出设备上。
+ * @param putdat 输出数据指针，用于传递额外的输出数据到putch函数中。
+ * @param fmt 格式化字符串指针，指向要输出的字符串。
+ * @param ap 可变参数列表，包含要输出的变量。
+ */
 void
 vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 {
-	register const char *p;
-	register int ch, err;
+	register const char *p; //用于存储错误消息的字符串常量的地址，并在需要时打印错误消息。
+	register int ch, err; //当前处理的字符。
 	unsigned long long num;
+	/**
+	 * @brief width 输出宽度，用于控制输出的最小宽度。
+	 * precision 输出精度，用于控制浮点数和字符串输出的精度。
+	 * lflag 长整型标志，用于区分不同类型的整数。
+	 * altflag 备用标志，用于控制某些类型的输出格式。
+	 */
 	int base, lflag, width, precision, altflag;
-	char padc;
+	char padc; //填充字符，用于将输出对齐。
 
+	/**
+	 * @brief 在while循环中读取fmt中的字符，直到找到%为止，输出非%字符。
+	 * 
+	 */
 	while (1) {
 		while ((ch = *(unsigned char *) fmt++) != '%') {
 			if (ch == '\0')
